@@ -21,10 +21,18 @@ import java.io.PrintWriter;
 
   @SneakyThrows
   public static void print(final @NotNull Appendable writer, final @Nullable String extraMessage) {
+    printExtra(writer, null);
     for (val line : LOGO) {
       writer.append(line + "\n");
     }
-    if (extraMessage != null) {
+    printExtra(writer, extraMessage);
+  }
+
+  @SneakyThrows
+  private static void printExtra(final @NotNull Appendable writer, final @Nullable String extraMessage) {
+    if (extraMessage == null) {
+      writer.append(EMPTY_LINE);
+    } else {
       final int beforeLine = (EMPTY_LINE.length() - extraMessage.length()) / 2;
       writer.append(EMPTY_LINE.substring(0, beforeLine) + extraMessage +
           EMPTY_LINE.substring(beforeLine + extraMessage.length()) + "\n");
