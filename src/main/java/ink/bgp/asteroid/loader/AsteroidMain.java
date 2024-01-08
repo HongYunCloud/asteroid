@@ -4,7 +4,6 @@ import ink.bgp.asteroid.api.Asteroid;
 import ink.bgp.asteroid.loader.archive.Archive;
 import ink.bgp.asteroid.loader.archive.ExplodedArchive;
 import ink.bgp.asteroid.loader.archive.JarFileArchive;
-import ink.bgp.asteroid.loader.jar.Handler;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 public final class AsteroidMain {
   public static final @NotNull String ASTEROID_KEY = "ink.bgp.asteroid";
@@ -35,6 +33,7 @@ public final class AsteroidMain {
     final String message = "asteroid package tool 1.0-SNAPSHOT deploying";
     if(systemConsole != null){
       LogoPrinter.print(systemConsole.writer(), message);
+      systemConsole.flush();
     } else {
       LogoPrinter.print(System.out, message);
     }
@@ -156,7 +155,7 @@ public final class AsteroidMain {
 
       final String[] nextArgs = new String[args.length - 1];
       System.arraycopy(args, 1, nextArgs, 0, nextArgs.length);
-      Class.forName(targetMainClass)
+      Class.forName(targetMainClass, false, launchedClassLoader)
           .getMethod("main", String[].class)
           .invoke(null, (Object) nextArgs);
     }

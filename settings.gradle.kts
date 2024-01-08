@@ -4,7 +4,7 @@ include("jarinjar-handler")
 include("api")
 
 include("fun-sedna")
-
+include("fun-sedna:launcher")
 
 private var scanProject:(ProjectDescriptor) -> Unit = {}
 

@@ -27,7 +27,6 @@ dependencies {
     api("li.cil.sedna:sedna-buildroot:0.0.8")
     api("li.cil.ceres:ceres:0.0.4")
 
-    api("org.jline:jline:3.25.0")
     api("it.unimi.dsi:fastutil:8.5.12")
     api("org.apache.commons:commons-lang3:3.14.0")
     api("commons-io:commons-io:2.15.1")

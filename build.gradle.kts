@@ -54,6 +54,9 @@ dependencies {
 }
 
 tasks.processResources {
+    dependsOn(project(":asteroid-jarinjar-handler").tasks.jar)
+    dependsOn(project(":asteroid-api").tasks.jar)
+
     with(copySpec{
         from(configurations.runtimeClasspath)
         into("ASTEROID-LIBS")
@@ -67,7 +70,7 @@ tasks.processResources {
                 it
             }
         })
-        exclude("META-INF/**")
+        exclude("META-INF/MANIFEST.MF")
     })
 }
 
