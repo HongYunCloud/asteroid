@@ -1,28 +1,25 @@
 package ink.bgp.asteroid.core;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import ink.bgp.asteroid.api.Asteroid;
+import ink.bgp.asteroid.api.plugin.AsteroidPlugin;
+import ink.bgp.asteroid.api.scope.AsteroidDependency;
+import ink.bgp.asteroid.api.scope.AsteroidScope;
+import ink.bgp.asteroid.core.injector.JarInjector;
+import ink.bgp.asteroid.core.plugin.AsteroidModule;
+import ink.bgp.asteroid.core.scope.AsteroidScopeImpl;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.ivy.Ivy;
-import org.apache.ivy.core.module.descriptor.*;
-import org.apache.ivy.core.module.id.ModuleRevisionId;
-import org.apache.ivy.core.report.ArtifactDownloadReport;
-import org.apache.ivy.core.report.ConfigurationResolveReport;
-import org.apache.ivy.core.report.ResolveReport;
-import org.apache.ivy.core.resolve.ResolveOptions;
-import org.apache.ivy.core.settings.IvySettings;
-import org.apache.ivy.plugins.parser.xml.XmlModuleDescriptorParser;
-import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.util.Message;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.lang.instrument.Instrumentation;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.*;
 
 public final class AsteroidCore implements Asteroid {
   private final @NotNull Path dataDirectory = Paths.get("asteroid");
@@ -30,13 +27,10 @@ public final class AsteroidCore implements Asteroid {
   @Getter(lazy = true)
   private final @NotNull Instrumentation instrumentation = loadInstrumentation();
 
-  @Getter(lazy = true)
-  private final @NotNull IvySettings ivySettings = loadIvySettings();
+  private final @NotNull Map<String, AsteroidScope> scopeMap = Collections.synchronizedMap(new HashMap<>());
 
-  @Getter(lazy = true)
-  private final @NotNull DefaultWorkspaceModuleDescriptor serverProject = loadServerProject();
-
-  private @Nullable ResolveReport resolveReport;
+  private @Nullable Injector injector;
+  private @NotNull Map<String, AsteroidPlugin> pluginMap = Collections.synchronizedMap(new HashMap<>());
 
   public AsteroidCore() {
     Asteroid.$set$instance(this);
@@ -49,154 +43,68 @@ public final class AsteroidCore implements Asteroid {
         .invoke(null);
   }
 
-  @SneakyThrows
-  private @NotNull IvySettings loadIvySettings() {
-    // fix: https://github.com/com-lihaoyi/Ammonite/commit/3668fb4c4954593f14e8a2b7b64cd88f61bfe985
-    final IvySettings settings = new IvySettings() {
-      @Override
-      public DependencyResolver getResolver(String resolverName) {
-        if (getResolverNames().contains(resolverName)) {
-          return super.getResolver(resolverName);
-        } else {
-          return null;
-        }
-      }
-    };
-
-    settings.setCheckUpToDate(false);
-    settings.setDefaultCache(dataDirectory.resolve("cache").toFile());
-
-    final Path ivysettingsPath = dataDirectory.resolve("ivysettings.xml");
-    if (Files.exists(ivysettingsPath) && !Files.isDirectory(ivysettingsPath)) {
-      settings.load(ivysettingsPath.toUri().toURL());
+  public @NotNull Injector injector() {
+    if (injector == null) {
+      throw new IllegalStateException("asteroid core is still not loaded");
     }
-
-    return settings;
-  }
-
-  @SneakyThrows
-  private @NotNull DefaultWorkspaceModuleDescriptor loadServerProject() {
-    final IvySettings settings = ivySettings();
-
-    final ModuleDescriptor buildServerProject = XmlModuleDescriptorParser.getInstance()
-        .parseDescriptor(settings, dataDirectory.resolve("build.xml").toUri().toURL(), false);
-
-    final DefaultWorkspaceModuleDescriptor serverProject = new DefaultWorkspaceModuleDescriptor(
-        buildServerProject.getResolvedModuleRevisionId(),
-        buildServerProject.getStatus(),
-        buildServerProject.getPublicationDate(),
-        buildServerProject.isDefault());
-
-    for (final Configuration configuration : buildServerProject.getConfigurations()) {
-      serverProject.addConfiguration(configuration);
-    }
-    for (final DependencyDescriptor dependency : buildServerProject.getDependencies()) {
-      serverProject.addDependency(dependency);
-    }
-    for (final ExcludeRule excludeRule : buildServerProject.getAllExcludeRules()) {
-      serverProject.addExcludeRule(excludeRule);
-    }
-    return serverProject;
-  }
-
-  @SneakyThrows
-  private @NotNull ResolveReport loadResolveReport() {
-    final IvySettings settings = ivySettings();
-    final Ivy ivy = Ivy.newInstance(settings);
-    final DefaultWorkspaceModuleDescriptor serverProject = serverProject();
-
-    final ResolveOptions resolveOptions = new ResolveOptions();
-    resolveOptions.setRefresh(false);
-    resolveOptions.setCheckIfChanged(true);
-
-    return ivy.resolve(serverProject, resolveOptions);
-  }
-
-  public @NotNull ResolveReport resolveReport() {
-    final ResolveReport resolveReport = this.resolveReport;
-    if (resolveReport == null) {
-      throw new IllegalStateException("resolve report not loaded");
-    }
-    return resolveReport;
+    return injector;
   }
 
   @Override
-  @SneakyThrows
+  public @NotNull AsteroidScope scope(final @NotNull String scopeName) {
+    return scopeMap.computeIfAbsent(scopeName, it ->
+        new AsteroidScopeImpl(scopeName));
+  }
+
+  @Override
   public void run() {
-    resolveReport = loadResolveReport();
+    scope("asteroid").run();
+    injectClassPath(AsteroidCore.class.getClassLoader(), "asteroid");
+
+    loadAsteroidPlugin();
+
+    scope("").run();
+    injectClassPath(ClassLoader.getSystemClassLoader());
+  }
+
+  private void loadAsteroidPlugin() {
+    if (this.injector != null) {
+      throw new IllegalStateException("asteroid core have been loaded");
+    }
+    final ServiceLoader<AsteroidModule> moduleLoader = ServiceLoader.load(
+        AsteroidModule.class,
+        AsteroidCore.class.getClassLoader());
+    final List<Module> moduleList = new ArrayList<>();
+    for (final AsteroidModule module : moduleLoader) {
+      moduleList.add(module);
+    }
+
+    this.injector = Guice.createInjector(moduleList);
+
+    final ServiceLoader<AsteroidPlugin.Metadata> metadataLoader = ServiceLoader.load(
+        AsteroidPlugin.Metadata.class,
+        AsteroidCore.class.getClassLoader());
+
+    for (final AsteroidPlugin.Metadata metadata : metadataLoader) {
+      pluginMap.put(metadata.name(), injector().getInstance(metadata.pluginClass()));
+    }
+
+    for (final Map.Entry<String, AsteroidPlugin> entry : pluginMap.entrySet()) {
+      Message.info(":: loading asteroid plugin :: name = " + entry.getKey());
+      entry.getValue().load();
+    }
   }
 
   @Override
-  public void addDependency(
-      final @NotNull String configuration,
-      final @NotNull String group,
-      final @NotNull String module,
-      final @NotNull String version,
-      final @Nullable String targetConfiguration) {
-    final DefaultWorkspaceModuleDescriptor serverProject = serverProject();
-    final DefaultDependencyDescriptor dependencyDescriptor = new DefaultDependencyDescriptor(
-        ModuleRevisionId.newInstance(group, module, version), true);
-    dependencyDescriptor.addDependencyConfiguration(configuration, targetConfiguration == null ? "runtime" : targetConfiguration);
-    serverProject.addDependency(dependencyDescriptor);
-  }
-
-  @Override
-  public @Nullable File getFile(
-      final @NotNull String configuration,
-      final @NotNull String group,
-      final @NotNull String module,
-      final @NotNull String version,
-      final @Nullable String targetConfiguration) {
-    final ResolveReport resolveReport = resolveReport();
-    final ConfigurationResolveReport configurationReport = resolveReport.getConfigurationReport(configuration);
-    if (configurationReport == null) {
-      return null;
-    }
-    final ArtifactDownloadReport[] artifactReports = configurationReport.getAllArtifactsReports();
-    if(artifactReports == null) {
-      return null;
-    }
-    for (ArtifactDownloadReport artifactReport : artifactReports) {
-      final Artifact artifact = artifactReport.getArtifact();
-      if (!group.equals(artifact.getModuleRevisionId().getOrganisation())) {
-        continue;
+  public void injectClassPath(
+      final @Nullable ClassLoader classLoader,
+      final @Nullable String scope,
+      final @Nullable String configuration) {
+    for (final AsteroidDependency dependency : scope(scope == null ? "" : scope)
+        .collectDependencies(configuration == null ? "runtime" : configuration)) {
+      if (dependency.file().getName().endsWith(".jar")) {
+        JarInjector.inject(classLoader, dependency.file());
       }
-      if (!module.equals(artifact.getModuleRevisionId().getOrganisation())) {
-        continue;
-      }
-      if (!version.equals(artifact.getModuleRevisionId().getRevision())) {
-        continue;
-      }
-      if (targetConfiguration != null && !targetConfiguration.equals(artifact.getExt())) {
-        continue;
-      }
-      return artifactReport.getLocalFile();
-    }
-    return null;
-  }
-
-  @Override
-  @SneakyThrows
-  public void injectSystemClassPath() {
-    final ResolveReport resolveReport = resolveReport();
-
-    Message.info(":: apply system artifact :: " + resolveReport.getResolveId());
-    final ConfigurationResolveReport systemConfigurationReport = resolveReport.getConfigurationReport("system");
-    if (systemConfigurationReport == null) {
-      return;
-    }
-    final ArtifactDownloadReport[] systemArtifactsReports = systemConfigurationReport.getAllArtifactsReports();
-    if (systemArtifactsReports == null) {
-      return;
-    }
-    for (final ArtifactDownloadReport artifactsReport : systemArtifactsReports) {
-      final File artifactFile = artifactsReport.getLocalFile();
-      if (!artifactFile.getName().endsWith(".jar")) {
-        Message.info("\tskip non-jar artifact: " + artifactFile);
-        continue;
-      }
-      Message.info("\tapply system library artifact: " + artifactFile);
-      instrumentation().appendToSystemClassLoaderSearch(new java.util.jar.JarFile(artifactFile));
     }
   }
 }

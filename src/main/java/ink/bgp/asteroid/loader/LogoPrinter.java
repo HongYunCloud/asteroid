@@ -5,9 +5,6 @@ import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
-
 /* package-private */ final class LogoPrinter {
   private static final @NotNull String @NotNull [] LOGO = new String[]{
       "  █████  ███████ ████████ ███████ ██████   ██████  ██ ██████  ",
@@ -31,7 +28,7 @@ import java.io.PrintWriter;
   @SneakyThrows
   private static void printExtra(final @NotNull Appendable writer, final @Nullable String extraMessage) {
     if (extraMessage == null) {
-      writer.append(EMPTY_LINE);
+      writer.append(EMPTY_LINE + "\n");
     } else {
       final int beforeLine = (EMPTY_LINE.length() - extraMessage.length()) / 2;
       writer.append(EMPTY_LINE.substring(0, beforeLine) + extraMessage +

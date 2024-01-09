@@ -12,6 +12,8 @@ public final class SednaMain {
   public static void main(final String[] args) throws Exception {
     Thread.currentThread().setContextClassLoader(SednaMain.class.getClassLoader());
 
+    StackWalker.getInstance().getCallerClass();
+
     Sedna.initialize();
 
     SednaServer server = new SednaServer(

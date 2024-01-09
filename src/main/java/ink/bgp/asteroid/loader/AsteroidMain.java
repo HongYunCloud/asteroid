@@ -1,6 +1,7 @@
 package ink.bgp.asteroid.loader;
 
 import ink.bgp.asteroid.api.Asteroid;
+import ink.bgp.asteroid.api.scope.AsteroidDependency;
 import ink.bgp.asteroid.loader.archive.Archive;
 import ink.bgp.asteroid.loader.archive.ExplodedArchive;
 import ink.bgp.asteroid.loader.archive.JarFileArchive;
@@ -133,7 +134,9 @@ public final class AsteroidMain {
         }
       } else if (nextName.contains(":")) {
         final String[] parts = nextName.split(":");
-        Asteroid.instance().addDependency("system", parts[0], parts[1], parts[2], parts.length > 3 ? parts[3] : null);
+        Asteroid.instance()
+            .scope("")
+            .addDependency("system", parts[0], parts[1], parts[2], parts.length > 3 ? parts[3] : null);
         targetMainClass = nextName;
       } else {
         targetMainClass = nextName;
@@ -141,14 +144,17 @@ public final class AsteroidMain {
     }
 
     Asteroid.instance().run();
-    Asteroid.instance().injectSystemClassPath();
 
     if (targetMainClass != null) {
       if (targetMainClass.contains(":")) {
         final String[] parts = targetMainClass.split(":");
-        final File targetFile = Asteroid.instance()
-            .getFile("system", parts[0], parts[1], parts[2], parts.length > 3 ? parts[3] : null);
-        try(final JarFile jarFile = new JarFile(targetFile)) {
+        final AsteroidDependency targetDependency = Asteroid.instance()
+            .scope("")
+            .getDependency("system", parts[0], parts[1], parts[2], parts.length > 3 ? parts[3] : null);
+        if (targetDependency == null) {
+          throw new IllegalStateException("no dependency \"" + targetMainClass + "\" found");
+        }
+        try (final JarFile jarFile = new JarFile(targetDependency.file())) {
           targetMainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
         }
       }

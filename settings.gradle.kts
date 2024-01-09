@@ -3,6 +3,8 @@ include("internal")
 include("jarinjar-handler")
 include("api")
 
+include("internal-javadowngrader")
+
 include("fun-sedna")
 include("fun-sedna:launcher")
 

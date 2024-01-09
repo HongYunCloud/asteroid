@@ -1,17 +1,24 @@
 plugins {
     id("java")
     id("java-library")
+    id("maven-publish")
 }
 
 allprojects {
     apply(plugin = "java")
     apply(plugin = "java-library")
+    apply(plugin = "maven-publish")
 
     group = "io.github.hongyuncloud"
     version = "1.0-SNAPSHOT"
 
     repositories {
         mavenCentral()
+        maven("https://maven.lenni0451.net/releases") {
+            content {
+                includeGroup("net.raphimc.javadowngrader")
+            }
+        }
     }
 
     java {
@@ -21,11 +28,25 @@ allprojects {
         withSourcesJar()
     }
 
+    publishing {
+        repositories {
+            maven(rootProject.layout.buildDirectory.dir("maven"))
+        }
+        publications {
+            create<MavenPublication>("mavenJar") {
+                from(components["java"])
+            }
+        }
+    }
+
     dependencies {
         compileOnly("org.projectlombok:lombok:1.18.26")
         annotationProcessor("org.projectlombok:lombok:1.18.26")
 
         compileOnly("org.jetbrains:annotations:24.1.0")
+
+        compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
+        annotationProcessor("com.google.auto.service:auto-service:1.1.1")
 
         testImplementation(platform("org.junit:junit-bom:5.9.1"))
         testImplementation("org.junit.jupiter:junit-jupiter")
@@ -78,6 +99,9 @@ tasks.jar {
     manifest {
         attributes["Main-Class"] = "ink.bgp.asteroid.loader.AsteroidMain"
         attributes["Launcher-Agent-Class"] = "ink.bgp.asteroid.loader.AsteroidMain"
+        attributes["Can-Retransform-Classes"] = "true"
+        attributes["Can-Redefine-Classes"] = "true"
+        attributes["Can-Set-Native-Method-Prefix"] = "true"
     }
 
     entryCompression = ZipEntryCompression.STORED

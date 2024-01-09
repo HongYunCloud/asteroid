@@ -16,8 +16,10 @@
 
 package ink.bgp.asteroid.loader;
 
+import ink.bgp.asteroid.api.classloader.AccessibleUrlPath;
 import ink.bgp.asteroid.loader.archive.Archive;
 import ink.bgp.asteroid.loader.jar.Handler;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,14 +36,12 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 /**
- * {@link ClassLoader} used by the {@link AsteroidMain}.
- *
  * @author Phillip Webb
  * @author Dave Syer
  * @author Andy Wilkinson
  * @since 1.0.0
  */
-/* package-private */ class LaunchedURLClassLoader extends URLClassLoader {
+/* package-private */ class LaunchedURLClassLoader extends URLClassLoader implements AccessibleUrlPath {
 
 	private static final int BUFFER_SIZE = 4096;
 
@@ -321,7 +321,12 @@ import java.util.jar.Manifest;
 		}
 	}
 
-	private static class UseFastConnectionExceptionsEnumeration implements Enumeration<URL> {
+  @Override
+  public void addURL(@NotNull URL url) {
+    super.addURL(url);
+  }
+
+  private static class UseFastConnectionExceptionsEnumeration implements Enumeration<URL> {
 
 		private final Enumeration<URL> delegate;
 
