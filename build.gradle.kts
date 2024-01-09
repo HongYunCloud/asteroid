@@ -30,8 +30,18 @@ allprojects {
 
     publishing {
         repositories {
-            maven(rootProject.layout.buildDirectory.dir("maven"))
+            if (System.getenv("CI").toBoolean()) {
+                maven("https://r.bgp.ink/maven/") {
+                    credentials {
+                        username = System.getenv("R_BGP_INK_USERNAME")
+                        password = System.getenv("R_BGP_INK_PASSWORD")
+                    }
+                }
+            } else {
+                maven(rootProject.layout.buildDirectory.dir("maven"))
+            }
         }
+
         publications {
             create<MavenPublication>("mavenJar") {
                 from(components["java"])
