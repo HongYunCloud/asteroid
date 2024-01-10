@@ -3,8 +3,8 @@ package ink.bgp.asteroid.core.transformer;
 import com.google.common.collect.MapMaker;
 import ink.bgp.asteroid.core.util.ClassNameUtil;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import lombok.Setter;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.utils.log.Logger;
 import net.lenni0451.classtransform.utils.tree.BasicClassProvider;
@@ -22,7 +22,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
 @Singleton
-public class TransformPreHandler implements ClassFileTransformer, IClassProvider {
+public class TransformPreHandler implements ClassFileTransformer, IClassProvider,
+    Provider<@NotNull TransformerManager> {
   private final @NotNull Map<@NotNull ClassLoader, @NotNull IClassProvider> providers = new MapMaker()
       .weakKeys()
       .weakValues()
@@ -113,5 +114,10 @@ public class TransformPreHandler implements ClassFileTransformer, IClassProvider
     } else {
       return null;
     }
+  }
+
+  @Override
+  public @NotNull TransformerManager get() {
+    return new TransformerManager(this);
   }
 }

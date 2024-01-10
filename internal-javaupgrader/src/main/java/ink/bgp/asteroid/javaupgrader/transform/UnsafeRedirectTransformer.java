@@ -1,7 +1,7 @@
 package ink.bgp.asteroid.javaupgrader.transform;
 
 import bot.inker.acj.JvmHacker;
-import ink.bgp.asteroid.core.spy.AsteroidSpyService;
+import ink.bgp.asteroid.core.spy.AsteroidSpyServiceImpl;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
@@ -21,11 +21,11 @@ import static java.lang.invoke.MethodHandles.*;
 
 @Singleton
 public final class UnsafeRedirectTransformer implements IBytecodeTransformer {
-  private final @NotNull AsteroidSpyService spyService;
+  private final @NotNull AsteroidSpyServiceImpl spyService;
   private @Nullable InvokeDynamicInsnNode defineClassNode;
 
   @Inject
-  private UnsafeRedirectTransformer(final @NotNull AsteroidSpyService spyService) {
+  private UnsafeRedirectTransformer(final @NotNull AsteroidSpyServiceImpl spyService) {
     this.spyService = spyService;
   }
 

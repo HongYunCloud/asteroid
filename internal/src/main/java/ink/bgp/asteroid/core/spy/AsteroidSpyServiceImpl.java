@@ -1,6 +1,7 @@
 package ink.bgp.asteroid.core.spy;
 
 import bot.inker.acj.JvmHacker;
+import ink.bgp.asteroid.api.spy.AsteroidSpyService;
 import ink.bgp.asteroid.core.util.DefineClassUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -19,7 +20,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public final class AsteroidSpyService {
+public final class AsteroidSpyServiceImpl implements AsteroidSpyService {
   private static final @NotNull String SPY_CLASS_NAME = "ink.bgp.asteroid.core.spy.$AsteroidSpy";
   private static final @NotNull String SPY_CLASS_INTERNAL_NAME = "ink/bgp/asteroid/core/spy/$AsteroidSpy";
 
@@ -27,7 +28,7 @@ public final class AsteroidSpyService {
   private @NotNull BigInteger idAlloc = BigInteger.ZERO;
 
   @Inject
-  private AsteroidSpyService() {
+  private AsteroidSpyServiceImpl() {
 
   }
 
@@ -37,8 +38,8 @@ public final class AsteroidSpyService {
     final Class<?> spyClass = Class.forName(SPY_CLASS_NAME, false, null);
     final MethodHandle loadImplHandle = JvmHacker.lookup()
         .findVirtual(
-            AsteroidSpyService.class,
-            "loadImpl",
+            AsteroidSpyServiceImpl.class,
+            "getHandle",
             MethodType.methodType(CallSite.class, String.class))
         .bindTo(this);
     JvmHacker.lookup()
@@ -52,7 +53,8 @@ public final class AsteroidSpyService {
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
   }
 
-  private @NotNull CallSite loadImpl(final @NotNull String name) {
+  @Override
+  public @NotNull CallSite getHandle(final @NotNull String name) {
     CallSite result = callSiteMap.get(name);
     if (result == null) {
       throw new IllegalStateException("spy callsite '" + name + "' not found");
@@ -60,20 +62,23 @@ public final class AsteroidSpyService {
     return result;
   }
 
+  @Override
   public @NotNull String saveConstantHandle(final @NotNull MethodHandle methodHandle) {
     final String id = nextId();
     callSiteMap.put(id, new ConstantCallSite(methodHandle));
     return id;
   }
 
+  @Override
   public @NotNull String saveMutableHandle(final @NotNull MethodHandle methodHandle) {
     final String id = nextId();
     callSiteMap.put(id, new MutableCallSite(methodHandle));
     return id;
   }
 
+  @Override
   public void setMutableHandle(final @NotNull String name, final @NotNull MethodHandle methodHandle) {
-    final CallSite callSite = loadImpl(name);
+    final CallSite callSite = getHandle(name);
     if (!(callSite instanceof MutableCallSite)) {
       throw new IllegalStateException("key " + name + " is not mutable");
     }
@@ -81,7 +86,7 @@ public final class AsteroidSpyService {
   }
 
   public @NotNull InvokeDynamicInsnNode createInsn(final @NotNull String name) {
-    final CallSite callSite = loadImpl(name);
+    final CallSite callSite = getHandle(name);
     final String descriptor = callSite.type().toMethodDescriptorString();
     return new InvokeDynamicInsnNode(
         name,
@@ -104,7 +109,7 @@ public final class AsteroidSpyService {
     try {
       Class.forName(name, false, null);
     } catch (ClassNotFoundException e) {
-      try(final InputStream in = AsteroidSpyService.class.getClassLoader().getResourceAsStream(name + ".class")) {
+      try (final InputStream in = AsteroidSpyServiceImpl.class.getClassLoader().getResourceAsStream(name + ".class")) {
         if (in == null) {
           throw new IllegalStateException("runtime class " + name + " not found");
         }

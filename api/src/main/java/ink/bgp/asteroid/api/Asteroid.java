@@ -4,7 +4,15 @@ import ink.bgp.asteroid.api.scope.AsteroidScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public interface Asteroid {
+  void injectMembers(@NotNull Object instance);
+
+  <T> Supplier<T> getProvider(@NotNull Class<T> type);
+
+  <T> T getInstance(@NotNull Class<T> type);
+
   @NotNull AsteroidScope scope(final @NotNull String scopeName);
 
   void run();

@@ -1,8 +1,10 @@
 package ink.bgp.asteroid.core;
 
+import com.google.common.eventbus.EventBus;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import ink.bgp.asteroid.api.Asteroid;
 import ink.bgp.asteroid.api.plugin.AsteroidPlugin;
 import ink.bgp.asteroid.api.scope.AsteroidDependency;
@@ -20,9 +22,11 @@ import java.lang.instrument.Instrumentation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class AsteroidCore implements Asteroid {
   private final @NotNull Path dataDirectory = Paths.get("asteroid");
+  private final @NotNull EventBus eventBus = new EventBus();
 
   @Getter(lazy = true)
   private final @NotNull Instrumentation instrumentation = loadInstrumentation();
@@ -48,6 +52,22 @@ public final class AsteroidCore implements Asteroid {
       throw new IllegalStateException("asteroid core is still not loaded");
     }
     return injector;
+  }
+
+  @Override
+  public void injectMembers(final @NotNull Object instance) {
+    injector().injectMembers(instance);
+  }
+
+  @Override
+  public <T> Supplier<T> getProvider(final @NotNull Class<T> type) {
+    final Provider<T> provider = injector().getProvider(type);
+    return provider == null ? null : provider::get;
+  }
+
+  @Override
+  public <T> T getInstance(final @NotNull Class<T> type) {
+    return injector().getInstance(type);
   }
 
   @Override

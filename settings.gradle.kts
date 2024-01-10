@@ -5,7 +5,7 @@ include("api")
 
 include("internal-javadowngrader")
 include("internal-javaupgrader")
-
+include("internal-license")
 
 include("fun-sedna")
 include("fun-sedna:launcher")
