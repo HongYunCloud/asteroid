@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import com.google.inject.AbstractModule;
 import ink.bgp.asteroid.api.Asteroid;
 import ink.bgp.asteroid.core.plugin.AsteroidModule;
+import ink.bgp.asteroid.core.spy.AsteroidSpyService;
 
 import java.lang.instrument.Instrumentation;
 
@@ -14,5 +15,7 @@ public class AsteroidCoreModule extends AbstractModule implements AsteroidModule
     AsteroidCore core = (AsteroidCore) Asteroid.instance();
     bind(AsteroidCore.class).toInstance(core);
     bind(Instrumentation.class).toInstance(core.instrumentation());
+
+    bind(AsteroidSpyService.class);
   }
 }

@@ -4,6 +4,8 @@ include("jarinjar-handler")
 include("api")
 
 include("internal-javadowngrader")
+include("internal-javaupgrader")
+
 
 include("fun-sedna")
 include("fun-sedna:launcher")

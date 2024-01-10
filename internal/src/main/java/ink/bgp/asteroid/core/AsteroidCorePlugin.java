@@ -3,7 +3,8 @@ package ink.bgp.asteroid.core;
 import com.google.auto.service.AutoService;
 import com.google.inject.Inject;
 import ink.bgp.asteroid.api.plugin.AsteroidPlugin;
-import ink.bgp.asteroid.core.transformer.FixClassNameTransform;
+import ink.bgp.asteroid.core.spy.AsteroidSpyService;
+import ink.bgp.asteroid.core.transformer.TransformPreHandler;
 import net.lenni0451.classtransform.TransformerManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,19 +12,32 @@ import java.lang.instrument.Instrumentation;
 
 public final class AsteroidCorePlugin implements AsteroidPlugin {
   private final @NotNull Instrumentation instrumentation;
+  private final @NotNull AsteroidSpyService spyService;
   private final @NotNull TransformerManager transformerManager;
+  private final @NotNull TransformPreHandler transformPreHandler;
 
   @Inject
-  private AsteroidCorePlugin(final @NotNull Instrumentation instrumentation, final @NotNull TransformerManager transformerManager) {
+  private AsteroidCorePlugin(
+      final @NotNull Instrumentation instrumentation,
+      final @NotNull AsteroidSpyService spyService,
+      final @NotNull TransformerManager transformerManager,
+      final @NotNull TransformPreHandler transformPreHandler) {
     this.instrumentation = instrumentation;
+    this.spyService = spyService;
     this.transformerManager = transformerManager;
+    this.transformPreHandler = transformPreHandler;
   }
 
   @Override
   public void load() {
+    spyService.load();
+
+    instrumentation.addTransformer(transformPreHandler, instrumentation.isRetransformClassesSupported());
+
     transformerManager.hookInstrumentation(instrumentation);
     instrumentation.removeTransformer(transformerManager);
-    instrumentation.addTransformer(new FixClassNameTransform(transformerManager), instrumentation.isRetransformClassesSupported());
+
+    transformPreHandler.loadTransformerManager(transformerManager);
   }
 
   @AutoService(AsteroidPlugin.Metadata.class)

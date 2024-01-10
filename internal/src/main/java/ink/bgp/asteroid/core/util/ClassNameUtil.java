@@ -1,43 +1,21 @@
-package ink.bgp.asteroid.core.transformer;
+package ink.bgp.asteroid.core.util;
 
-import net.lenni0451.classtransform.utils.log.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.ProtectionDomain;
-import java.util.Base64;
 
-public final class FixClassNameTransform implements ClassFileTransformer {
-  private final @NotNull ClassFileTransformer classFileTransformer;
-
-  public FixClassNameTransform(@NotNull ClassFileTransformer classFileTransformer) {
-    this.classFileTransformer = classFileTransformer;
+public class ClassNameUtil {
+  private ClassNameUtil() {
+    throw new UnsupportedOperationException();
   }
 
-  @Override
-  public byte[] transform(
-      final ClassLoader loader,
-      String className,
-      final Class<?> classBeingRedefined,
-      final ProtectionDomain protectionDomain,
-      final byte[] classfileBuffer
-  ) throws IllegalClassFormatException {
-    if (className == null) {
-      try {
-        className = getClassName(ByteBuffer.wrap(classfileBuffer));
-      } catch (Throwable e) {
-        Logger.error("Failed to get class name from bytes \n{}",
-            Base64.getEncoder().encode(classfileBuffer), e);
-      }
-    }
-    return classFileTransformer.transform(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+  public static @NotNull String getClassName(final byte @NotNull [] bytes) {
+    return getClassName(ByteBuffer.wrap(bytes));
   }
 
-  private static @NotNull String getClassName(final @NotNull ByteBuffer buf) {
+  public static @NotNull String getClassName(final @NotNull ByteBuffer buf) {
     if (buf.order(ByteOrder.BIG_ENDIAN).getInt() != 0xCAFEBABE) {
       throw new IllegalArgumentException("not a valid class file");
     }
@@ -112,7 +90,7 @@ public final class FixClassNameTransform implements ClassFileTransformer {
   }
 
   @SuppressWarnings("RedundantCast")
-  public static <T extends Buffer> Buffer cast(T byteBuffer) {
+  private static <T extends Buffer> Buffer cast(T byteBuffer) {
     return (Buffer) byteBuffer;
   }
 }
