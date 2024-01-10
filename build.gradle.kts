@@ -10,7 +10,14 @@ allprojects {
     apply(plugin = "maven-publish")
 
     group = "io.github.hongyuncloud"
-    version = "1.0-SNAPSHOT"
+
+    val baseVersion = "1.0"
+    val buildNumber = System.getenv("GITHUB_RUN_NUMBER")
+    if (buildNumber == null) {
+        version = "$baseVersion-SNAPSHOT"
+    } else {
+        version = "$baseVersion-$buildNumber"
+    }
 
     repositories {
         mavenCentral()
