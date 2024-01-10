@@ -3,6 +3,7 @@ package ink.bgp.asteroid.api;
 import ink.bgp.asteroid.api.scope.AsteroidScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.function.Supplier;
 
@@ -13,7 +14,9 @@ public interface Asteroid {
 
   <T> T getInstance(@NotNull Class<T> type);
 
+
   @NotNull AsteroidScope scope(final @NotNull String scopeName);
+
 
   void run();
 
@@ -33,10 +36,22 @@ public interface Asteroid {
       final @Nullable String configuration);
 
   static @NotNull Asteroid instance() {
-    return AsteroidHolder.instance();
+    final Asteroid instance = $Holder.instance;
+    if (instance == null) {
+      throw new IllegalStateException("Asteroid is not initialized");
+    }
+    return instance;
   }
 
   static void $set$instance(final @NotNull Asteroid instance) {
-    AsteroidHolder.setInstance(instance);
+    $Holder.instance = instance;
+  }
+
+  final class $Holder {
+    private static @UnknownNullability Asteroid instance = null;
+
+    private $Holder() {
+      throw new UnsupportedOperationException();
+    }
   }
 }
