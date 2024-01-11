@@ -8,6 +8,7 @@ import ink.bgp.asteroid.core.eventbus.AsteroidEventBusImpl;
 import ink.bgp.asteroid.core.plugin.AsteroidModule;
 import ink.bgp.asteroid.core.spy.AsteroidSpyServiceImpl;
 import ink.bgp.asteroid.core.transformer.TransformPreHandler;
+import jakarta.inject.Singleton;
 import net.lenni0451.classtransform.TransformerManager;
 
 import java.lang.instrument.Instrumentation;
@@ -22,7 +23,9 @@ public class AsteroidCoreModule extends AbstractModule implements AsteroidModule
     bind(Instrumentation.class).toInstance(core.instrumentation());
 
     bind(TransformPreHandler.class);
-    bind(TransformerManager.class).toProvider(TransformPreHandler.class);
+    bind(TransformerManager.class)
+        .toProvider(TransformPreHandler.class)
+        .in(Singleton.class);
 
     bind(AsteroidEventBus.class).to(AsteroidEventBusImpl.class);
 
