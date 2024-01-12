@@ -1,7 +1,6 @@
 package ink.bgp.asteroid.core.spy;
 
 import bot.inker.acj.JvmHacker;
-import ink.bgp.asteroid.api.spy.AsteroidSpyService;
 import ink.bgp.asteroid.core.util.DefineClassUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -20,9 +19,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public final class AsteroidSpyServiceImpl implements AsteroidSpyService {
-  private static final @NotNull String SPY_CLASS_NAME = "ink.bgp.asteroid.core.spy.$AsteroidSpy";
-  private static final @NotNull String SPY_CLASS_INTERNAL_NAME = "ink/bgp/asteroid/core/spy/$AsteroidSpy";
+public final class AsteroidSpyServiceImpl implements AsteroidSpyInternalService {
+  public static final @NotNull String SPY_CLASS_NAME = "ink.bgp.asteroid.core.spy.$AsteroidSpy";
+  public static final @NotNull String SPY_CLASS_INTERNAL_NAME = "ink/bgp/asteroid/core/spy/$AsteroidSpy";
 
   private final @NotNull Map<@NotNull String, @NotNull CallSite> callSiteMap = new ConcurrentHashMap<>();
   private @NotNull BigInteger idAlloc = BigInteger.ZERO;
@@ -85,6 +84,7 @@ public final class AsteroidSpyServiceImpl implements AsteroidSpyService {
     callSite.setTarget(methodHandle);
   }
 
+  @Override
   public @NotNull InvokeDynamicInsnNode createInsn(final @NotNull String name) {
     final CallSite callSite = getHandle(name);
     final String descriptor = callSite.type().toMethodDescriptorString();
@@ -100,6 +100,7 @@ public final class AsteroidSpyServiceImpl implements AsteroidSpyService {
     );
   }
 
+  @Override
   public @NotNull InvokeDynamicInsnNode createInsn(final @NotNull MethodHandle methodHandle) {
     return createInsn(saveConstantHandle(methodHandle));
   }

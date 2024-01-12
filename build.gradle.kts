@@ -51,6 +51,10 @@ allprojects {
 
         publications {
             create<MavenPublication>("mavenJar") {
+                if (project.path != ":") {
+                    artifactId = rootProject.name + project.path.replace(':', '-')
+                }
+
                 from(components["java"])
             }
         }
@@ -82,18 +86,18 @@ configurations {
 }
 
 dependencies {
-    "shadow"(project(":asteroid-jarinjar-handler"))
-    "shadow"(project(":asteroid-api"))
+    "shadow"(project(":jarinjar-handler"))
+    "shadow"(project(":api"))
 
-    runtimeOnly(project(":asteroid-internal")) {
+    runtimeOnly(project(":internal")) {
         exclude(group = group, module = "asteroid-jarinjar-handler")
         exclude(group = group, module = "asteroid-api")
     }
 }
 
 tasks.processResources {
-    dependsOn(project(":asteroid-jarinjar-handler").tasks.jar)
-    dependsOn(project(":asteroid-api").tasks.jar)
+    dependsOn(project(":jarinjar-handler").tasks.jar)
+    dependsOn(project(":api").tasks.jar)
 
     with(copySpec{
         from(configurations.runtimeClasspath)

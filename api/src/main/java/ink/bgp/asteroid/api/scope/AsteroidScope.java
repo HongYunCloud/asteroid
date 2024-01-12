@@ -3,7 +3,6 @@ package ink.bgp.asteroid.api.scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
 public interface AsteroidScope {
@@ -15,6 +14,10 @@ public interface AsteroidScope {
       final @Nullable String targetConfiguration);
 
   void run();
+
+  default @NotNull List<@NotNull AsteroidDependency> collectDependencies() {
+    return collectDependencies("runtime");
+  }
 
   @NotNull List<@NotNull AsteroidDependency> collectDependencies(final @NotNull String configuration);
 

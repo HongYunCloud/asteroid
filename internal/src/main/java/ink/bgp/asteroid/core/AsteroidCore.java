@@ -10,6 +10,8 @@ import ink.bgp.asteroid.api.plugin.AsteroidPlugin;
 import ink.bgp.asteroid.api.scope.AsteroidDependency;
 import ink.bgp.asteroid.api.scope.AsteroidScope;
 import ink.bgp.asteroid.core.injector.JarInjector;
+import ink.bgp.asteroid.core.log.ClasstransformLogBridge;
+import ink.bgp.asteroid.core.log.IvyLogBridge;
 import ink.bgp.asteroid.core.plugin.AsteroidModule;
 import ink.bgp.asteroid.core.scope.AsteroidScopeImpl;
 import lombok.Getter;
@@ -17,6 +19,7 @@ import lombok.SneakyThrows;
 import org.apache.ivy.util.Message;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Path;
@@ -38,6 +41,14 @@ public final class AsteroidCore implements Asteroid {
 
   public AsteroidCore() {
     Asteroid.$set$instance(this);
+    configureLogs();
+  }
+
+  private void configureLogs() {
+    net.lenni0451.classtransform.utils.log.Logger.LOGGER = new ClasstransformLogBridge(
+        LoggerFactory.getLogger("net.lenni0451.classtransform"));
+    Message.setDefaultLogger(new IvyLogBridge(
+        LoggerFactory.getLogger("org.apache.ivy")));
   }
 
   @SneakyThrows

@@ -36,7 +36,7 @@ dependencies {
     "shadow"("org.apache.logging.log4j:log4j-core:2.22.1")
     "shadow"("org.apache.logging.log4j:log4j-jul:2.22.1")
 
-    runtimeOnly(project(":asteroid-fun-sedna"))
+    runtimeOnly(project(":fun-sedna"))
 }
 
 tasks.processResources {

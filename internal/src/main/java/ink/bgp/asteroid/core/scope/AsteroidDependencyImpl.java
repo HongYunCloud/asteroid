@@ -17,4 +17,9 @@ public class AsteroidDependencyImpl implements AsteroidDependency {
   public @NotNull File file() {
     return report.getLocalFile();
   }
+
+  @Override
+  public String toString() {
+    return report.getArtifact().toString();
+  }
 }

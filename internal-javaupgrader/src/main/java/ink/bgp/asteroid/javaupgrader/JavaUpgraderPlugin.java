@@ -4,12 +4,14 @@ import com.google.auto.service.AutoService;
 import com.google.inject.Inject;
 import ink.bgp.asteroid.api.plugin.AsteroidPlugin;
 import ink.bgp.asteroid.javaupgrader.transform.UnsafeRedirectTransformer;
+import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import net.lenni0451.classtransform.TransformerManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Singleton
 public class JavaUpgraderPlugin implements AsteroidPlugin {
   private static final @NotNull Logger logger = LoggerFactory.getLogger(JavaUpgraderPlugin.class);
 

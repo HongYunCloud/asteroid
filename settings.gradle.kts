@@ -3,21 +3,12 @@ include("internal")
 include("jarinjar-handler")
 include("api")
 
+include("internal-bukkit")
 include("internal-javadowngrader")
 include("internal-javaupgrader")
 include("internal-license")
+include("internal-kotlin-script")
+include("internal-forcespy")
 
 include("fun-sedna")
 include("fun-sedna:launcher")
-
-private var scanProject:(ProjectDescriptor) -> Unit = {}
-
-scanProject = { projectDescriptor ->
-    projectDescriptor.children.forEach(scanProject)
-
-    if (projectDescriptor.path != ":") {
-        projectDescriptor.name = rootProject.name + projectDescriptor.path.replace(':', '-')
-    }
-}
-
-scanProject(rootProject)

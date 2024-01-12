@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import com.google.inject.Inject;
 import ink.bgp.asteroid.api.plugin.AsteroidPlugin;
 import ink.bgp.asteroid.core.util.DefineClassUtil;
+import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import net.lenni0451.classtransform.TransformerManager;
 import net.raphimc.javadowngrader.impl.classtransform.JavaDowngraderTransformer;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
+@Singleton
 public final class JavaDowngraderPlugin implements AsteroidPlugin {
   private static final @NotNull Logger logger = LoggerFactory.getLogger(JavaDowngraderPlugin.class);
 

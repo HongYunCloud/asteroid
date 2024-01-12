@@ -1,15 +1,16 @@
 package ink.bgp.asteroid.license;
 
 import com.google.auto.service.AutoService;
-import ink.bgp.asteroid.api.Asteroid;
 import ink.bgp.asteroid.api.plugin.AsteroidPlugin;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.ivy.util.Message;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Singleton
 public final class AsteroidLicensePlugin implements AsteroidPlugin {
   @Inject
   private AsteroidLicensePlugin() {

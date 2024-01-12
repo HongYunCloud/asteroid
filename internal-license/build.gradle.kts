@@ -1,3 +1,3 @@
 dependencies {
-    compileOnly(project(":asteroid-internal"))
+    compileOnly(project(":internal"))
 }

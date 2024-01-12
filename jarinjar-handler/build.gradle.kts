@@ -1,3 +1,3 @@
 dependencies {
-    api(project(":asteroid-api"))
+    api(project(":api"))
 }

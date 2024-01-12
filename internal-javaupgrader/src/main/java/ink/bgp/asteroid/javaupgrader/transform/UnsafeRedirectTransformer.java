@@ -63,15 +63,19 @@ public final class UnsafeRedirectTransformer implements IBytecodeTransformer {
       final @NotNull String className,
       final byte @NotNull [] bytecode,
       final boolean calculateStackMapFrames) {
-    ClassWriter writer = new ClassWriter(0);
+    final boolean[] visitedFlag = new boolean[]{false};
+    final ClassWriter writer = new ClassWriter(0);
     new ClassReader(bytecode).accept(
-        new RedirectVisitor(writer), 0);
-    return writer.toByteArray();
+        new RedirectVisitor(writer, visitedFlag), 0);
+    return visitedFlag[0] ? writer.toByteArray() : null;
   }
 
   private final class RedirectVisitor extends ClassVisitor {
-    public RedirectVisitor(final @NotNull ClassVisitor classVisitor) {
+    private final boolean @NotNull [] visitedFlag;
+
+    public RedirectVisitor(final @NotNull ClassVisitor classVisitor, final boolean @NotNull [] visitedFlag) {
       super(Opcodes.ASM9, classVisitor);
+      this.visitedFlag = visitedFlag;
     }
 
     @Override
@@ -82,13 +86,17 @@ public final class UnsafeRedirectTransformer implements IBytecodeTransformer {
         final @Nullable String signature,
         final @NotNull String @Nullable [] exceptions) {
       return new RedirectMethodVisitor(
-          super.visitMethod(access, name, descriptor, signature, exceptions));
+          super.visitMethod(access, name, descriptor, signature, exceptions),
+          visitedFlag);
     }
   }
 
   private final class RedirectMethodVisitor extends MethodVisitor {
-    public RedirectMethodVisitor(final @NotNull MethodVisitor methodVisitor) {
+    private final boolean @NotNull [] visitedFlag;
+
+    public RedirectMethodVisitor(final @NotNull MethodVisitor methodVisitor, final boolean @NotNull [] visitedFlag) {
       super(Opcodes.ASM9, methodVisitor);
+      this.visitedFlag = visitedFlag;
     }
 
     @Override
@@ -103,6 +111,7 @@ public final class UnsafeRedirectTransformer implements IBytecodeTransformer {
           && "defineClass".equals(name)
           && "(Ljava/lang/String;[BIILjava/lang/ClassLoader;Ljava/security/ProtectionDomain;)Ljava/lang/Class;".equals(descriptor)
       ) {
+        visitedFlag[0] = true;
         defineClassNode.accept(this);
       } else {
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);

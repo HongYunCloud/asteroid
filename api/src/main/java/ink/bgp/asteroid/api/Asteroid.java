@@ -35,6 +35,10 @@ public interface Asteroid {
       final @Nullable String scope,
       final @Nullable String configuration);
 
+  static <T> T get(final @NotNull Class<T> clazz) {
+    return instance().getInstance(clazz);
+  }
+
   static @NotNull Asteroid instance() {
     final Asteroid instance = $Holder.instance;
     if (instance == null) {
